@@ -1,0 +1,13 @@
+torch>=2.1.0
+torchvision>=0.16.0
+numpy
+opencv-python
+scikit-image
+einops
+tqdm
+# Mamba dependencies - strict versions to avoid compilation issues if possible
+# Note: User might need to install these manually if wheels are not found for their CUDA version
+causal-conv1d>=1.1.0
+mamba-ssm>=1.1.1
+# Metrics
+lpips
