@@ -49,16 +49,36 @@ class UIEBDataset(Dataset):
             )
         
         self.image_names = sorted(os.listdir(self.input_dir))
+        
+        # 1. Filter out prefix if provided
         if filename_prefix:
             prefix = filename_prefix.lower()
             self.image_names = [n for n in self.image_names if n.lower().startswith(prefix)]
+            
+        # 2. Filter out duplicates with "(copy)" in the name
+        self.image_names = [n for n in self.image_names if "(copy)" not in n]
         
-        # Simple split for train/val
-        # First 800 train, rest val/test (as per report)
-        if mode == 'train':
+        # 3. If mode is "val", we need to override the paths to point to the test set
+        if mode == 'val':
+            # Base directory for the testset is expected to be adjacent to 'train'
+            # Assuming root_dir is something like .../Dataset/train
+            base_dataset_dir = os.path.dirname(self.root_dir)
+            test_dir = os.path.join(base_dataset_dir, 'testset(ref)', 'test-UIEB')
+            
+            if os.path.isdir(test_dir):
+                self.input_dir = os.path.join(test_dir, 'input')
+                self.gt_dir = os.path.join(test_dir, 'target')
+                if os.path.isdir(self.input_dir):
+                    self.image_names = sorted(os.listdir(self.input_dir))
+                    if filename_prefix:
+                        self.image_names = [n for n in self.image_names if n.lower().startswith(prefix)]
+                    self.image_names = [n for n in self.image_names if "(copy)" not in n]
+            else:
+                print(f"Warning: Test directory not found at {test_dir}. Falling back to splitting train.")
+                self.image_names = self.image_names[800:]
+        elif mode == 'train':
+            # Ensure we only take the first 800 (though if duplicates are filtered, it should be exactly 800)
             self.image_names = self.image_names[:800]
-        elif mode == 'val':
-            self.image_names = self.image_names[800:]
         
         # Filter to ensure matching GT exists (some raw images in UIEB don't have GT)
         self.valid_pairs = []
