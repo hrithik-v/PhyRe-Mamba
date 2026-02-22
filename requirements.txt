@@ -5,6 +5,8 @@ opencv-python
 scikit-image
 einops
 tqdm
+# Config
+pyyaml
 # Mamba dependencies - strict versions to avoid compilation issues if possible
 # Note: User might need to install these manually if wheels are not found for their CUDA version
 causal-conv1d>=1.1.0

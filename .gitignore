@@ -1,2 +1,2 @@
-.ai/
-*.pyc
+checkpoints/
+__pycache__

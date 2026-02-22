@@ -17,12 +17,16 @@ class VSSBlock(nn.Module):
         self.d_model = d_model
         
         # Mamba Inner Block
-        # Ensure we use a version compatible with available hardware
+        # Mamba kernels are CUDA-only in many installs; keep a CPU fallback.
         self.mamba = Mamba(
             d_model=d_model,
             d_state=d_state,
             d_conv=d_conv,
             expand=expand
+        )
+        self.cpu_mixer = nn.Sequential(
+            nn.Linear(d_model, d_model),
+            nn.GELU()
         )
         
         self.norm = nn.LayerNorm(d_model)
@@ -47,20 +51,22 @@ class VSSBlock(nn.Module):
         
         # Mamba forward pass
         # Standard Mamba is causal and 1D. For images, we can use it as is for global context
-        # or implement SS2D (multi-scan). For simplicity in this base version, 
-        # we treat the flattened image as a sequence. 
+        # or implement SS2D (multi-scan). For simplicity in this base version,
+        # we treat the flattened image as a sequence.
         # Note: A more advanced version would flip sequences (Bi-directional).
-        
-        # Forward scan
-        out_fwd = self.mamba(x_norm)
-        
-        # Backward scan (simple bi-directional emulation)
-        x_rev = torch.flip(x_norm, [1])
-        out_rev = self.mamba(x_rev)
-        out_rev = torch.flip(out_rev, [1])
-        
-        # Combine (average)
-        out = (out_fwd + out_rev) / 2
+        if x_norm.is_cuda:
+            # Forward scan
+            out_fwd = self.mamba(x_norm)
+
+            # Backward scan (simple bi-directional emulation)
+            x_rev = torch.flip(x_norm, [1])
+            out_rev = self.mamba(x_rev)
+            out_rev = torch.flip(out_rev, [1])
+
+            # Combine (average)
+            out = (out_fwd + out_rev) / 2
+        else:
+            out = self.cpu_mixer(x_norm)
         
         # Residual connection
         out = out + x_flat

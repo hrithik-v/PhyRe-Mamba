@@ -8,25 +8,50 @@ from .physics import compute_physics_maps
 from PIL import Image
 
 class UIEBDataset(Dataset):
-    def __init__(self, root_dir, mode='train', size=(256, 256)):
+    def __init__(self, root_dir='/kaggle/input/datasets/xuhangc/underwaterbenchmarkdataset/Dataset/train', mode='train', size=(256, 256), filename_prefix='uieb'):
         """
         Args:
             root_dir: Path to UIEB dataset root. Expected structure:
                       root_dir/raw-890/ (input images)
                       root_dir/reference-890/ (ground truth)
+                      OR
+                      root_dir/input/ (input images)
+                      root_dir/target/ (ground truth)
             mode: 'train' or 'val' or 'test'
             size: Tuple (H, W) to resize images to.
+            filename_prefix: Optional filename prefix filter (case-insensitive).
         """
         self.root_dir = root_dir
         self.mode = mode
         self.size = size
-        
-        # Paths setup - Adjust based on actual unzipped structure
-        # Assuming standard UIEB structure
-        self.input_dir = os.path.join(root_dir, 'raw-890')
-        self.gt_dir = os.path.join(root_dir, 'reference-890')
+
+        # Paths setup - Auto-detect common UIEB layouts
+        raw_dir = os.path.join(root_dir, 'raw-890')
+        ref_dir = os.path.join(root_dir, 'reference-890')
+        input_dir = os.path.join(root_dir, 'input')
+        target_dir = os.path.join(root_dir, 'target')
+        train_input_dir = os.path.join(root_dir, 'train', 'input')
+        train_target_dir = os.path.join(root_dir, 'train', 'target')
+
+        if os.path.isdir(raw_dir) and os.path.isdir(ref_dir):
+            self.input_dir = raw_dir
+            self.gt_dir = ref_dir
+        elif os.path.isdir(input_dir) and os.path.isdir(target_dir):
+            self.input_dir = input_dir
+            self.gt_dir = target_dir
+        elif os.path.isdir(train_input_dir) and os.path.isdir(train_target_dir):
+            self.input_dir = train_input_dir
+            self.gt_dir = train_target_dir
+        else:
+            raise FileNotFoundError(
+                "UIEB dataset not found. Expected raw-890/reference-890 or input/target folders. "
+                f"Given root_dir={root_dir}"
+            )
         
         self.image_names = sorted(os.listdir(self.input_dir))
+        if filename_prefix:
+            prefix = filename_prefix.lower()
+            self.image_names = [n for n in self.image_names if n.lower().startswith(prefix)]
         
         # Simple split for train/val
         # First 800 train, rest val/test (as per report)

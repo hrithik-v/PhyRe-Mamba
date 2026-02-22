@@ -1,0 +1,19 @@
+# PhyRe-Mamba training config
+
+# Dataset
+root_dir: /kaggle/input/datasets/xuhangc/underwaterbenchmarkdataset/Dataset/train
+filename_prefix: uieb
+image_size:
+  - 256
+  - 256
+
+# Training
+batch_size: 4
+lr: 0.0002
+epochs: 200
+lambda_per: 0.0
+val_freq: 5
+save_dir: ./checkpoints
+
+# Runtime
+num_workers: 2
