@@ -52,7 +52,8 @@ def overfit_test(config_path="config.yaml", num_images=5, epochs=100):
     
     print(f"Using {num_images} images for overfitting test\n")
     
-    dataloader = DataLoader(tiny_dataset, batch_size=1, shuffle=False, num_workers=0)
+    batch_size = min(cfg.get("batch_size", 4), num_images)
+    dataloader = DataLoader(tiny_dataset, batch_size=batch_size, shuffle=False, num_workers=0)
     
     # Setup device
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -64,8 +65,8 @@ def overfit_test(config_path="config.yaml", num_images=5, epochs=100):
         print(f"Using {torch.cuda.device_count()} GPUs")
         model = nn.DataParallel(model)
     
-    # Optimizer (high lr for aggressive learning)
-    optimizer = optim.AdamW(model.parameters(), lr=0.001)
+    # Optimizer
+    optimizer = optim.AdamW(model.parameters(), lr=cfg.get("lr", 0.0002))
     criterion = FlowMatchingLoss()
     
     # Training loop
@@ -96,7 +97,7 @@ def overfit_test(config_path="config.yaml", num_images=5, epochs=100):
             optimizer.step()
             
             total_loss += loss.item()
-            mse = torch.nn.functional.mse_loss(x1_pred, x1)
+            mse = torch.nn.functional.mse_loss(torch.clamp(x1_pred, 0.0, 1.0), x1)
             psnr = 10 * torch.log10(1.0 / (mse + 1e-8))
             total_psnr += psnr.item()
         
