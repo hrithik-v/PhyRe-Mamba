@@ -3,6 +3,8 @@ import os
 import torch
 import cv2
 import numpy as np
+import matplotlib
+matplotlib.use('Agg') # Set backend to Agg for headless environments like Kaggle
 import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader
 
