@@ -130,7 +130,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Overfitting test for PhyRe-Mamba")
     parser.add_argument("--config", default="config.yaml", help="Path to YAML config")
     parser.add_argument("--num-images", type=int, default=5, help="Number of images to overfit on")
-    parser.add_argument("--epochs", type=int, default=100, help="Number of training epochs")
+    parser.add_argument("--epochs", type=int, default=500, help="Number of training epochs")
     args = parser.parse_args()
     
     overfit_test(config_path=args.config, num_images=args.num_images, epochs=args.epochs)

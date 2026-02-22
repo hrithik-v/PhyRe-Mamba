@@ -65,6 +65,11 @@ class PhyReMamba(nn.Module):
                 nn.init.xavier_uniform_(m.weight)
                 if m.bias is not None:
                     nn.init.zeros_(m.bias)
+        
+        # Zero-initialize the final velocity head for identity mapping start
+        nn.init.zeros_(self.head.weight)
+        if self.head.bias is not None:
+            nn.init.zeros_(self.head.bias)
 
     def forward(self, x):
         """
